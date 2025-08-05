@@ -4,8 +4,18 @@ import { generateMockTxMeta } from '../tests/txUtils';
 
 /**
  *
+ * @param options - The options for the setup.
+ * @param options.getCoverageResultTimeout - The timeout for the get coverage result.
+ * @param options.getCoverageResultPollInterval - The poll interval for the get coverage result.
+ * @returns Objects that have been created for testing.
  */
-function setup() {
+function setup({
+  getCoverageResultTimeout,
+  getCoverageResultPollInterval,
+}: {
+  getCoverageResultTimeout?: number;
+  getCoverageResultPollInterval?: number;
+} = {}) {
   // Setup fetch mock.
   const fetchMock = jest.spyOn(global, 'fetch') as jest.MockedFunction<
     typeof fetch
@@ -17,8 +27,8 @@ function setup() {
   // Setup backend.
   const backend = new ShieldRemoteBackend({
     getAccessToken,
-    getCoverageResultTimeout: 1000,
-    getCoverageResultPollInterval: 100,
+    getCoverageResultTimeout,
+    getCoverageResultPollInterval,
   });
 
   return {
@@ -62,7 +72,9 @@ describe('ShieldRemoteBackend', () => {
   });
 
   it('should check coverage with delay', async () => {
-    const { backend, fetchMock, getAccessToken } = setup();
+    const { backend, fetchMock, getAccessToken } = setup({
+      getCoverageResultPollInterval: 100,
+    });
 
     // Mock init coverage check.
     fetchMock.mockResolvedValueOnce({
@@ -88,5 +100,43 @@ describe('ShieldRemoteBackend', () => {
     expect(coverageResult).toStrictEqual({ status });
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(getAccessToken).toHaveBeenCalledTimes(3);
+  });
+
+  it('should throw on init coverage check failure', async () => {
+    const { backend, fetchMock, getAccessToken } = setup({
+      getCoverageResultTimeout: 0,
+    });
+
+    // Mock init coverage check.
+    const status = 500;
+    fetchMock.mockResolvedValueOnce({
+      status,
+    } as unknown as Response);
+
+    const txMeta = generateMockTxMeta();
+    await expect(backend.checkCoverage(txMeta)).rejects.toThrow(
+      `Failed to init coverage check: ${status}`,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getAccessToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('should throw on check coverage timeout', async () => {
+    const { backend, fetchMock, getAccessToken } = setup({
+      getCoverageResultTimeout: 0,
+    });
+
+    // Mock init coverage check.
+    fetchMock.mockResolvedValueOnce({
+      status: 200,
+      json: jest.fn().mockResolvedValue({ coverageId: 'coverageId' }),
+    } as unknown as Response);
+
+    const txMeta = generateMockTxMeta();
+    await expect(backend.checkCoverage(txMeta)).rejects.toThrow(
+      'Timeout waiting for coverage result',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getAccessToken).toHaveBeenCalledTimes(1);
   });
 });

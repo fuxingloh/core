@@ -1,3 +1,5 @@
+import type { TransactionControllerState } from '@metamask/transaction-controller';
+
 import { ShieldController } from './ShieldController';
 import { createAuthenticationControllerMock } from '../tests/mocks/authenticationController';
 import { createMockBackend } from '../tests/mocks/backend';
@@ -53,8 +55,9 @@ describe('ShieldController', () => {
       );
     });
     baseMessenger.publish(
-      'TransactionController:unapprovedTransactionAdded',
-      txMeta,
+      'TransactionController:stateChange',
+      { transactions: [txMeta] } as TransactionControllerState,
+      undefined as never,
     );
     expect(await coverageResultReceived).toBeUndefined();
     expect(backend.checkCoverage).toHaveBeenCalledWith(
@@ -83,7 +86,28 @@ describe('ShieldController', () => {
         (_coverageResult) => resolve(),
       );
     });
-    baseMessenger.publish('TransactionController:transactionSimulated', txMeta);
+
+    // Add transaction.
+    baseMessenger.publish(
+      'TransactionController:stateChange',
+      { transactions: [txMeta] } as TransactionControllerState,
+      undefined as never,
+    );
+    expect(await coverageResultReceived).toBeUndefined();
+    expect(backend.checkCoverage).toHaveBeenCalledWith(
+      await authenticationController.getBearerToken(),
+      txMeta,
+    );
+
+    // Simulate transaction.
+    txMeta.simulationData = {
+      tokenBalanceChanges: [],
+    };
+    baseMessenger.publish(
+      'TransactionController:stateChange',
+      { transactions: [txMeta] } as TransactionControllerState,
+      undefined as never,
+    );
     expect(await coverageResultReceived).toBeUndefined();
     expect(backend.checkCoverage).toHaveBeenCalledWith(
       await authenticationController.getBearerToken(),

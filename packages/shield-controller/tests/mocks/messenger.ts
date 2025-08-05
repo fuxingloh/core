@@ -19,10 +19,7 @@ export function createMockMessenger() {
   const messenger = baseMessenger.getRestricted({
     name: controllerName,
     allowedActions: ['AuthenticationController:getBearerToken'],
-    allowedEvents: [
-      'TransactionController:unapprovedTransactionAdded',
-      'TransactionController:transactionSimulated',
-    ],
+    allowedEvents: ['TransactionController:stateChange'],
   });
 
   return {

@@ -2,8 +2,7 @@ import { BaseController } from '@metamask/base-controller';
 import type { RestrictedMessenger } from '@metamask/base-controller';
 import type { AuthenticationControllerGetBearerToken } from '@metamask/profile-sync-controller/auth';
 import type {
-  TransactionControllerTransactionSimulatedEvent,
-  TransactionControllerUnapprovedTransactionAddedEvent,
+  TransactionControllerStateChangeEvent,
   TransactionMeta,
 } from '@metamask/transaction-controller';
 
@@ -58,9 +57,7 @@ export type AllowedActions = AuthenticationControllerGetBearerToken;
 /**
  * The external events available to the ShieldController.
  */
-export type AllowedEvents =
-  | TransactionControllerUnapprovedTransactionAddedEvent
-  | TransactionControllerTransactionSimulatedEvent;
+export type AllowedEvents = TransactionControllerStateChangeEvent;
 
 /**
  * The messenger of the {@link ShieldController}.
@@ -118,38 +115,34 @@ export class ShieldController extends BaseController<
 
   start() {
     this.messagingSystem.subscribe(
-      'TransactionController:unapprovedTransactionAdded',
-      (txMeta: TransactionMeta) => {
-        this.#handleUnapprovedTransactionAdded(txMeta).catch(
-          // istanbul ignore next
-          (error) => {
-            log('Error in transaction handler:', error);
-          },
-        );
-      },
-    );
-
-    this.messagingSystem.subscribe(
-      'TransactionController:transactionSimulated',
-      (txMeta: TransactionMeta) => {
-        this.#handleTransactionSimulated(txMeta).catch(
-          // istanbul ignore next
-          (error) => {
-            log('Error in transaction handler:', error);
-          },
-        );
-      },
+      'TransactionController:stateChange',
+      this.#handleTransactionControllerStateChange.bind(this),
+      (state) => state.transactions,
     );
   }
 
-  async #handleUnapprovedTransactionAdded(transactionMeta: TransactionMeta) {
-    log('Transaction added', transactionMeta);
-    await this.checkCoverage(transactionMeta);
-  }
+  #handleTransactionControllerStateChange(
+    transactions: TransactionMeta[],
+    previousTransactions: TransactionMeta[] | undefined,
+  ) {
+    const previousTransactionsById = new Map<string, TransactionMeta>(
+      previousTransactions?.map((tx) => [tx.id, tx]) ?? [],
+    );
+    for (const transaction of transactions) {
+      const previousTransaction = previousTransactionsById.get(transaction.id);
 
-  async #handleTransactionSimulated(transactionMeta: TransactionMeta) {
-    log('Transaction simulated', transactionMeta);
-    await this.checkCoverage(transactionMeta);
+      // Check coverage if the transaction is new or if the simulation data has
+      // changed.
+      if (
+        !previousTransaction ||
+        previousTransaction.simulationData !== transaction.simulationData
+      ) {
+        this.checkCoverage(transaction).catch(
+          // istanbul ignore next
+          (error) => log('Error checking coverage:', error),
+        );
+      }
+    }
   }
 
   async checkCoverage(txMeta: TransactionMeta): Promise<CoverageResult> {

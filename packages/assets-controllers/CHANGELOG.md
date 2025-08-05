@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Comprehensive balance selectors for multichain account groups and wallets ([#6235](https://github.com/MetaMask/core/pull/6235))
+
 ### Fixed
 
 - Use a narrow selector when listening to `CurrencyRateController:stateChange` ([#6217](https://github.com/MetaMask/core/pull/6217))

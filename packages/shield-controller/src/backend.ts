@@ -35,11 +35,15 @@ export class ShieldRemoteBackend implements ShieldBackend {
 
   readonly #getCoverageResultPollInterval: number;
 
-  constructor(
-    getAccessToken: () => Promise<string>,
-    getCoverageResultTimeout: number = 5000, // milliseconds
-    getCoverageResultPollInterval: number = 1000, // milliseconds
-  ) {
+  constructor({
+    getAccessToken,
+    getCoverageResultTimeout = 5000, // milliseconds
+    getCoverageResultPollInterval = 1000, // milliseconds
+  }: {
+    getAccessToken: () => Promise<string>;
+    getCoverageResultTimeout?: number;
+    getCoverageResultPollInterval?: number;
+  }) {
     this.#getAccessToken = getAccessToken;
     this.#getCoverageResultTimeout = getCoverageResultTimeout;
     this.#getCoverageResultPollInterval = getCoverageResultPollInterval;

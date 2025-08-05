@@ -60,10 +60,7 @@ describe('ShieldController', () => {
       undefined as never,
     );
     expect(await coverageResultReceived).toBeUndefined();
-    expect(backend.checkCoverage).toHaveBeenCalledWith(
-      await authenticationController.getBearerToken(),
-      txMeta,
-    );
+    expect(backend.checkCoverage).toHaveBeenCalledWith(txMeta);
   });
 
   it('should purge coverage history when the limit is exceeded', async () => {
@@ -94,10 +91,7 @@ describe('ShieldController', () => {
       undefined as never,
     );
     expect(await coverageResultReceived).toBeUndefined();
-    expect(backend.checkCoverage).toHaveBeenCalledWith(
-      await authenticationController.getBearerToken(),
-      txMeta,
-    );
+    expect(backend.checkCoverage).toHaveBeenCalledWith(txMeta);
 
     // Simulate transaction.
     txMeta.simulationData = {
@@ -109,9 +103,6 @@ describe('ShieldController', () => {
       undefined as never,
     );
     expect(await coverageResultReceived).toBeUndefined();
-    expect(backend.checkCoverage).toHaveBeenCalledWith(
-      await authenticationController.getBearerToken(),
-      txMeta,
-    );
+    expect(backend.checkCoverage).toHaveBeenCalledWith(txMeta);
   });
 });

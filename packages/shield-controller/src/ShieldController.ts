@@ -171,10 +171,7 @@ export class ShieldController extends BaseController<
   }
 
   async #fetchCoverageResult(txMeta: TransactionMeta): Promise<CoverageResult> {
-    const accessToken = await this.messagingSystem.call(
-      'AuthenticationController:getBearerToken',
-    );
-    return this.#backend.checkCoverage(accessToken, txMeta);
+    return this.#backend.checkCoverage(txMeta);
   }
 
   #addCoverageResult(txId: string, coverageResult: CoverageResult) {

@@ -1,5 +1,8 @@
 import { BaseController } from '@metamask/base-controller';
-import type { RestrictedMessenger } from '@metamask/base-controller';
+import type {
+  ControllerStateChangeEvent,
+  RestrictedMessenger,
+} from '@metamask/base-controller';
 import type { AuthenticationControllerGetBearerToken } from '@metamask/profile-sync-controller/auth';
 import type {
   TransactionControllerStateChangeEvent,
@@ -43,11 +46,17 @@ export type ShieldControllerCoverageResultReceivedEvent = {
   payload: [coverageResult: CoverageResult];
 };
 
+export type ShieldControllerStateChangeEvent = ControllerStateChangeEvent<
+  typeof controllerName,
+  ShieldControllerState
+>;
+
 /**
  * The internal events available to the ShieldController.
  */
 export type ShieldControllerEvents =
-  ShieldControllerCoverageResultReceivedEvent;
+  | ShieldControllerCoverageResultReceivedEvent
+  | ShieldControllerStateChangeEvent;
 
 /**
  * The external actions available to the ShieldController.

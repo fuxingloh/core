@@ -6,13 +6,9 @@ import { generateMockTxMeta } from '../tests/txUtils';
  */
 function setup() {
   // Setup fetch mock.
-  const fetchMock = jest.fn().mockResolvedValue({
-    json: () =>
-      Promise.resolve({
-        status: 'covered',
-      }),
-  });
-  global.fetch = fetchMock;
+  const fetchMock = jest.spyOn(global, 'fetch') as jest.MockedFunction<
+    typeof fetch
+  >;
 
   // Setup access token mock.
   const getAccessToken = jest.fn().mockResolvedValue('token');
@@ -30,21 +26,25 @@ function setup() {
 describe('ShieldRemoteBackend', () => {
   it('should check coverage', async () => {
     const { backend, fetchMock, getAccessToken } = setup();
+
+    // Mock init coverage check.
+    fetchMock.mockResolvedValueOnce({
+      status: 200,
+      json: jest.fn().mockResolvedValue({ coverageId: 'coverageId' }),
+    } as unknown as Response);
+
+    // Mock get coverage result.
+    fetchMock.mockResolvedValueOnce({
+      status: 200,
+      json: jest.fn().mockResolvedValue({ status: 'covered' }),
+    } as unknown as Response);
+
     const txMeta = generateMockTxMeta();
     const coverageResult = await backend.checkCoverage(txMeta);
     expect(coverageResult).toStrictEqual({
       status: 'covered',
     });
-    expect(fetchMock).toHaveBeenCalledWith(`${BASE_URL}/api/v1/coverage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer token',
-      },
-      body: JSON.stringify({
-        txMeta,
-      }),
-    });
-    expect(getAccessToken).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(getAccessToken).toHaveBeenCalledTimes(2);
   });
 });

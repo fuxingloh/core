@@ -46,7 +46,6 @@
   },
   "dependencies": {
     "@metamask/base-controller": "^8.0.1",
-    "@metamask/profile-sync-controller": "^21.0.0",
     "@metamask/utils": "^11.4.2"
   },
   "devDependencies": {

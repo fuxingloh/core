@@ -3,7 +3,6 @@ import type {
   ControllerStateChangeEvent,
   RestrictedMessenger,
 } from '@metamask/base-controller';
-import type { AuthenticationControllerGetBearerToken } from '@metamask/profile-sync-controller/auth';
 import type {
   TransactionControllerStateChangeEvent,
   TransactionMeta,
@@ -61,7 +60,7 @@ export type ShieldControllerEvents =
 /**
  * The external actions available to the ShieldController.
  */
-export type AllowedActions = AuthenticationControllerGetBearerToken;
+export type AllowedActions = never;
 
 /**
  * The external events available to the ShieldController.

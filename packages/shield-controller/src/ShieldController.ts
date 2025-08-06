@@ -105,6 +105,11 @@ export class ShieldController extends BaseController<
 
   readonly #coverageHistoryLimit: number;
 
+  readonly #transactionControllerStateChangeHandler: (
+    transactions: TransactionMeta[],
+    previousTransactions: TransactionMeta[] | undefined,
+  ) => void;
+
   constructor(options: ShieldControllerOptions) {
     const { messenger, state, backend, coverageHistoryLimit = 10 } = options;
     super({
@@ -119,13 +124,23 @@ export class ShieldController extends BaseController<
 
     this.#backend = backend;
     this.#coverageHistoryLimit = coverageHistoryLimit;
+    this.#transactionControllerStateChangeHandler =
+      this.#handleTransactionControllerStateChange.bind(this);
   }
 
   start() {
     this.messagingSystem.subscribe(
       'TransactionController:stateChange',
-      this.#handleTransactionControllerStateChange.bind(this),
+      this.#transactionControllerStateChangeHandler,
       (state) => state.transactions,
+    );
+  }
+
+  stop() {
+    this.messagingSystem.unsubscribe(
+      'TransactionController:stateChange',
+      // @ts-expect-error - https://github.com/MetaMask/core/issues/6200
+      this.#transactionControllerStateChangeHandler,
     );
   }
 

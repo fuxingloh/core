@@ -52,6 +52,28 @@ describe('ShieldController', () => {
     expect(backend.checkCoverage).toHaveBeenCalledWith(txMeta);
   });
 
+  it('should no longer trigger checkCoverage when controller is stopped', async () => {
+    const { controller, baseMessenger, backend } = setup();
+    controller.stop();
+    const txMeta = generateMockTxMeta();
+    const coverageResultReceived = new Promise<void>((resolve, reject) => {
+      baseMessenger.subscribe(
+        'ShieldController:coverageResultReceived',
+        (_coverageResult) => resolve(),
+      );
+      setTimeout(() => reject(new Error('Coverage result not received')), 100);
+    });
+    baseMessenger.publish(
+      'TransactionController:stateChange',
+      { transactions: [txMeta] } as TransactionControllerState,
+      undefined as never,
+    );
+    await expect(coverageResultReceived).rejects.toThrow(
+      'Coverage result not received',
+    );
+    expect(backend.checkCoverage).not.toHaveBeenCalled();
+  });
+
   it('should purge coverage history when the limit is exceeded', async () => {
     const { controller } = setup({
       coverageHistoryLimit: 1,
